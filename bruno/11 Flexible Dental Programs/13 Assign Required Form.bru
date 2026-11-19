@@ -1,0 +1,25 @@
+meta {
+  name: Assign Required Form
+  type: http
+  seq: 13
+}
+post {
+  url: {{baseUrl}}/api/v1/step-templates/{{examinationTemplateId}}/forms
+  body: json
+  auth: none
+}
+headers {
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+}
+body:json {
+  {
+    "form_version_id": "{{formVersionId}}",
+    "phase": "BEFORE",
+    "actor_type": "PATIENT",
+    "is_required": true
+  }
+}
+tests {
+  test("assigns required patient form to step", function () { expect(res.getStatus()).to.equal(201); });
+}

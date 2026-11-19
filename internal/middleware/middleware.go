@@ -65,9 +65,13 @@ func Logger(log *slog.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		started := time.Now()
 		c.Next()
+		path := c.FullPath()
+		if path == "" {
+			path = "unmatched_route"
+		}
 		log.Info("http_request",
 			"request_id", c.GetString("request_id"), "method", c.Request.Method,
-			"path", c.Request.URL.Path, "status", c.Writer.Status(),
+			"path", path, "status", c.Writer.Status(),
 			"latency_ms", time.Since(started).Milliseconds(), "ip", c.ClientIP(),
 		)
 	}

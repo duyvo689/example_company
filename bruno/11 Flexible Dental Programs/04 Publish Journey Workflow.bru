@@ -1,0 +1,16 @@
+meta {
+  name: Publish Journey Workflow
+  type: http
+  seq: 4
+}
+post {
+  url: {{baseUrl}}/api/v1/workflows/{{journeyWorkflowId}}/publish
+  body: none
+  auth: none
+}
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+tests {
+  test("publishes journey workflow", function () { expect(res.getStatus()).to.equal(200); });
+}

@@ -1,0 +1,27 @@
+meta {
+  name: Enable Program At Location
+  type: http
+  seq: 14
+}
+put {
+  url: {{baseUrl}}/api/v1/treatment-programs/{{programId}}/locations
+  body: json
+  auth: none
+}
+headers {
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+}
+body:json {
+  {
+    "location_id": "{{locationId}}",
+    "status": "active",
+    "config": {
+      "chair_type": "surgery",
+      "implant_brand": "demo"
+    }
+  }
+}
+tests {
+  test("enables program with location override", function () { expect(res.getStatus()).to.equal(200); });
+}

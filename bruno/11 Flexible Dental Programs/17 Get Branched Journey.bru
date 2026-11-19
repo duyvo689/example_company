@@ -1,0 +1,26 @@
+meta {
+  name: Get Branched Journey
+  type: http
+  seq: 17
+}
+get {
+  url: {{baseUrl}}/api/v1/care-journeys/{{flexibleJourneyId}}
+  body: none
+  auth: none
+}
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+script:post-response {
+  const steps = res.getBody().data.steps;
+  bru.setVar("examinationStepId", steps.find(s => s.step_key === "initial-examination").id);
+  bru.setVar("boneGraftStepId", steps.find(s => s.step_key === "bone-graft").id);
+}
+tests {
+  test("activates root and blocks conditional dependent step", function () {
+    const steps = res.getBody().data.steps;
+    expect(res.getStatus()).to.equal(200);
+    expect(steps.find(s => s.step_key === "initial-examination").status).to.equal("READY");
+    expect(steps.find(s => s.step_key === "bone-graft").status).to.equal("NOT_STARTED");
+  });
+}

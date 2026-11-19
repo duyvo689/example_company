@@ -1,0 +1,35 @@
+meta {
+  name: Create Patient Without Graft
+  type: http
+  seq: 23
+}
+
+post {
+  url: {{baseUrl}}/api/v1/patients
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "primary_location_id": "{{locationId}}",
+    "public_ref": "NO-GRAFT-{{timestamp}}",
+    "external_chart_id": "NO-GRAFT-CHART-{{timestamp}}",
+    "status": "active"
+  }
+}
+
+script:post-response {
+  bru.setVar("noGraftPatientId", res.getBody().data.id);
+}
+
+tests {
+  test("creates another patient for the false condition branch", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+}

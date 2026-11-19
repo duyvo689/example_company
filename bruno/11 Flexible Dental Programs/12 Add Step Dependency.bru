@@ -1,0 +1,22 @@
+meta {
+  name: Add Step Dependency
+  type: http
+  seq: 12
+}
+post {
+  url: {{baseUrl}}/api/v1/step-templates/{{boneGraftTemplateId}}/dependencies
+  body: json
+  auth: none
+}
+headers {
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+}
+body:json {
+  {
+    "depends_on_step_id": "{{examinationTemplateId}}"
+  }
+}
+tests {
+  test("adds acyclic step dependency", function () { expect(res.getStatus()).to.equal(201); });
+}

@@ -1,0 +1,23 @@
+meta {
+  name: Wait For Doctor
+  type: http
+  seq: 20
+}
+patch {
+  url: {{baseUrl}}/api/v1/journey-steps/{{examinationStepId}}
+  body: json
+  auth: none
+}
+headers {
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+}
+body:json {
+  {
+    "status": "WAITING_DOCTOR",
+    "note": "Chờ bác sĩ duyệt CT"
+  }
+}
+tests {
+  test("follows configured IN_PROGRESS to WAITING_DOCTOR transition", function () { expect(res.getStatus()).to.equal(200); });
+}

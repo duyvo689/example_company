@@ -1,0 +1,35 @@
+meta {
+  name: Submit Renewal Idempotently
+  type: http
+  seq: 6
+  tags: [
+    smoke
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/public/renewal-links/{{renewalToken}}/submit
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "verification_value": "Nguyen|1990-05-20",
+    "intake_type": "GLP1_RENEWAL",
+    "schema_version": 1,
+    "answers": {"duplicate": true},
+    "clinical_flags": {}
+  }
+}
+
+tests {
+  test("double submit returns original submission", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().data.id).to.equal(bru.getVar("renewalSubmissionId"));
+  });
+}

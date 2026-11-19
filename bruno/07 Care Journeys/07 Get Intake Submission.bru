@@ -1,0 +1,25 @@
+meta {
+  name: Get Intake Submission
+  type: http
+  seq: 7
+  tags: [
+    smoke
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/intake-submissions/{{renewalSubmissionId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+tests {
+  test("returns submitted answers without mutation endpoint", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().data.answers.current_weight_kg).to.equal(82);
+  });
+}

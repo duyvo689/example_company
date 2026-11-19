@@ -16,7 +16,11 @@ func (h *Handler) ListOrders(c *gin.Context) {
 	if !ok {
 		return
 	}
-	result, err := h.service.ListOrders(c.Request.Context(), httpx.Claims(c), page, size, c.Query("status"), locationID, patientID)
+	journeyStepID, ok := optionalUUIDQuery(c, "journey_step_id")
+	if !ok {
+		return
+	}
+	result, err := h.service.ListOrders(c.Request.Context(), httpx.Claims(c), page, size, c.Query("status"), locationID, patientID, journeyStepID)
 	respond(c, result, err)
 }
 

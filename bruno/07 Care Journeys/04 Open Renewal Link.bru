@@ -1,0 +1,32 @@
+meta {
+  name: Open Renewal Link
+  type: http
+  seq: 4
+  tags: [
+    smoke
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/public/renewal-links/{{renewalToken}}/open
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "verification_value": "Nguyen|1990-05-20"
+  }
+}
+
+tests {
+  test("opens verified renewal link", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().data.status).to.equal("OPENED");
+    expect(res.getBody().data.intake_type).to.equal("GLP1_RENEWAL");
+  });
+}

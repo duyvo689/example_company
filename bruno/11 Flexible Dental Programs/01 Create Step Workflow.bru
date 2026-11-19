@@ -1,0 +1,42 @@
+meta {
+  name: Create Step Workflow
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workflows
+  body: json
+  auth: none
+}
+headers {
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+}
+body:json {
+  {
+    "code": "IMPLANT_STEP_{{timestamp}}",
+    "name": "Quy trình bước Implant",
+    "entity_type": "STEP",
+    "states": [
+      {"code":"READY","standard_code":"READY","display_name":"Sẵn sàng","display_order":1,"is_initial":true},
+      {"code":"IN_PROGRESS","standard_code":"IN_PROGRESS","display_name":"Đang thực hiện","display_order":2},
+      {"code":"WAITING_DOCTOR","standard_code":"WAITING_DOCTOR","display_name":"Chờ bác sĩ","display_order":3},
+      {"code":"COMPLETED","standard_code":"COMPLETED","display_name":"Hoàn tất","display_order":4,"is_terminal":true}
+    ],
+    "transitions": [
+      {"from_state_code":"READY","to_state_code":"IN_PROGRESS"},
+      {"from_state_code":"IN_PROGRESS","to_state_code":"WAITING_DOCTOR"},
+      {"from_state_code":"WAITING_DOCTOR","to_state_code":"COMPLETED"}
+    ]
+  }
+}
+script:pre-request {
+  if (!bru.getVar("timestamp")) bru.setVar("timestamp", Date.now());
+}
+script:post-response {
+  bru.setVar("stepWorkflowId", res.getBody().data.id);
+}
+tests {
+  test("creates configurable step workflow", function () { expect(res.getStatus()).to.equal(201); });
+}

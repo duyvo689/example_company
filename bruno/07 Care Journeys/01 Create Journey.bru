@@ -1,0 +1,56 @@
+meta {
+  name: Create Journey
+  type: http
+  seq: 1
+  tags: [
+    smoke
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/care-journeys
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "patient_id": "{{patientId}}",
+    "location_id": "{{locationId}}",
+    "program_code": "GLP1",
+    "current_stage": "WAITING_INTAKE",
+    "initial_steps": [
+      {
+        "step_key": "initial-medication-order",
+        "step_type": "MEDICATION_ORDER",
+        "status": "READY",
+        "cycle_number": 1,
+        "metadata": {"source": "bruno"}
+      },
+      {
+        "step_key": "cycle-1-renewal-1",
+        "step_type": "RENEWAL",
+        "status": "WAITING_PATIENT",
+        "cycle_number": 1,
+        "metadata": {"form": "GLP1_RENEWAL"}
+      }
+    ]
+  }
+}
+
+script:post-response {
+  bru.setVar("journeyId", res.getBody().data.id);
+}
+
+tests {
+  test("creates onboarding journey", function () {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.getBody().data.status).to.equal("ONBOARDING");
+    expect(res.getBody().data.episode_number).to.equal(1);
+  });
+}

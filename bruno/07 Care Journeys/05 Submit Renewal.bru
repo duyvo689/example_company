@@ -1,0 +1,46 @@
+meta {
+  name: Submit Renewal
+  type: http
+  seq: 5
+  tags: [
+    smoke
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/public/renewal-links/{{renewalToken}}/submit
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "verification_value": "Nguyen|1990-05-20",
+    "intake_type": "GLP1_RENEWAL",
+    "schema_version": 1,
+    "answers": {
+      "current_weight_kg": 82,
+      "has_side_effects": true,
+      "side_effect_details": "Mild nausea"
+    },
+    "clinical_flags": {
+      "requires_provider_review": true
+    }
+  }
+}
+
+script:post-response {
+  bru.setVar("renewalSubmissionId", res.getBody().data.id);
+}
+
+tests {
+  test("creates immutable renewal submission", function () {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.getBody().data.renewal_link_id).to.equal(bru.getVar("renewalLinkId"));
+    expect(res.getBody().data.status).to.equal("SUBMITTED");
+  });
+}

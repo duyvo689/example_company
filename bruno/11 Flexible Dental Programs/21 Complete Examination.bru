@@ -1,0 +1,23 @@
+meta {
+  name: Complete Examination
+  type: http
+  seq: 21
+}
+patch {
+  url: {{baseUrl}}/api/v1/journey-steps/{{examinationStepId}}
+  body: json
+  auth: none
+}
+headers {
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+}
+body:json {
+  {
+    "status": "COMPLETED",
+    "note": "Bác sĩ đã duyệt kết quả"
+  }
+}
+tests {
+  test("completes step after required form and unlocks dependencies", function () { expect(res.getStatus()).to.equal(200); expect(res.getBody().data.status).to.equal("COMPLETED"); });
+}

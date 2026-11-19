@@ -22,6 +22,7 @@ body:json {
   {
     "location_id": "{{locationId}}",
     "patient_id": "{{patientId}}",
+    "journey_step_id": "{{orderStepId}}",
     "external_order_id": "{{externalOrderId}}",
     "status": "pending"
   }
@@ -39,5 +40,6 @@ tests {
   test("creates order and outbox event", function () {
     expect(res.getStatus()).to.equal(201);
     expect(res.getBody().data.status).to.equal("pending");
+    expect(res.getBody().data.journey_step_id).to.equal(bru.getVar("orderStepId"));
   });
 }

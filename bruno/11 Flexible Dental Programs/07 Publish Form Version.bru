@@ -1,0 +1,16 @@
+meta {
+  name: Publish Form Version
+  type: http
+  seq: 7
+}
+post {
+  url: {{baseUrl}}/api/v1/form-versions/{{formVersionId}}/publish
+  body: none
+  auth: none
+}
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+tests {
+  test("publishes immutable form version", function () { expect(res.getStatus()).to.equal(200); expect(res.getBody().data.status).to.equal("PUBLISHED"); });
+}

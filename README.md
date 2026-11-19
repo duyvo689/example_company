@@ -6,12 +6,19 @@ Backend Golang/Gin cho mô hình multi-tenant trong ERD: company, location, user
 
 ![ERD của Example Company API](docs/images/example-company-erd.png)
 
+Phần mở rộng **Quản lý đợt điều trị** được mô tả tại [docs/care-journey.md](docs/care-journey.md). Kiến trúc cấu hình linh hoạt cho chuỗi nha khoa được mô tả tại [docs/flexible-dental-programs.md](docs/flexible-dental-programs.md).
+
 ## Có sẵn
 
 - JWT access token + refresh token rotation + logout/revoke.
 - RBAC với 3 role mặc định: `ADMIN`, `STAFF`, `CLINICIAN`.
 - Tenant isolation theo `company_id`; `CLINICIAN` chỉ truy cập location được gán.
 - CRUD đầy đủ cho company, location, custom role, membership, assignment, patient/location và order.
+- Quản lý đợt điều trị gồm care journey, journey step, intake submission, intake file, renewal link và churn event.
+- Chương trình điều trị nha khoa có version, step dependency, điều kiện rẽ nhánh, bước định kỳ và cấu hình riêng theo chi nhánh.
+- Form và workflow có bản công bố bất biến; journey đang chạy luôn ghim vào đúng program/form version cũ.
+- Mã trạng thái chuẩn phục vụ báo cáo toàn chuỗi, nhưng tên hiển thị và đường chuyển được cấu hình theo chương trình.
+- Renewal token chỉ trả về một lần, chỉ lưu hash, giới hạn xác minh sai và chống double-submit.
 - Pagination, search, status filter và validation request.
 - Audit mọi request làm thay đổi dữ liệu.
 - Transactional outbox cho `order.created`, `order.updated`, `order.deleted`; tự gửi webhook và retry exponential backoff.
@@ -99,6 +106,19 @@ Base URL: `/api/v1`. Danh sách endpoint chính:
 | Assignment | `GET/POST /memberships/:membership_id/locations`, `DELETE .../locations/:location_id` |
 | Patient | `GET/POST /patients`, `GET/PATCH/DELETE /patients/:patient_id` |
 | Patient location | `POST /patients/:patient_id/locations`, `DELETE .../locations/:location_id` |
+| Treatment program | `GET/POST /treatment-programs`, `GET/PUT /treatment-programs/:program_id` |
+| Program version | `POST /treatment-programs/:program_id/versions`, `POST /program-versions/:version_id/publish` |
+| Program configuration | `POST /program-versions/:version_id/steps`, `PUT /step-templates/:id`, `POST .../dependencies`, `POST .../forms` |
+| Program location | `PUT /treatment-programs/:program_id/locations` |
+| Program runtime | `POST /treatment-programs/:program_id/instantiate` |
+| Workflow | `GET/POST /workflows`, `POST /workflows/:workflow_id/publish` |
+| Form template | `GET/POST /form-templates`, `POST /form-templates/:form_id/versions`, `POST /form-versions/:version_id/publish` |
+| Care journey | `GET/POST /care-journeys`, `GET/PATCH /care-journeys/:journey_id` |
+| Journey step | `POST /care-journeys/:journey_id/steps`, `PATCH /journey-steps/:step_id` |
+| Journey lifecycle | `POST /care-journeys/:journey_id/churn-events` |
+| Intake | `GET/POST /intake-submissions`, `GET /intake-submissions/:submission_id`, `POST .../files` |
+| Renewal admin | `GET/POST /journey-steps/:step_id/renewal-links` |
+| Renewal public | `POST /public/renewal-links/:token/open`, `POST .../:token/submit` |
 | Order | `GET/POST /orders`, `GET/PATCH/DELETE /orders/:order_id` |
 | Audit | `GET /audit-logs`, `GET /audit-logs/:audit_log_id` |
 | Outbox | `GET /integration-events`, `POST /integration-events/:event_id/retry` |
@@ -124,6 +144,13 @@ Membership bị inactive, user bị inactive hoặc company bị inactive sẽ b
 - Không xóa cứng location/patient/membership đang được order tham chiếu; chuyển `status=inactive` để giữ lịch sử.
 - Delete ở entity chính là soft delete; bảng nối được hard delete.
 - Thay đổi order và integration event được ghi chung một database transaction (outbox pattern).
+- Mỗi patient chỉ có một journey `ONBOARDING`, `ACTIVE` hoặc `PAUSED` trong cùng program.
+- Program version, form version và workflow đã publish là bất biến; muốn thay đổi phải tạo bản nháp/bản mới.
+- Dependency của step không được tạo chu trình; form bắt buộc phải được submit trước khi hoàn tất step.
+- Điều kiện rẽ nhánh chỉ là JSON data (`field`, `operator`, `value`), không cho lưu hoặc chạy script tự do.
+- `journey_steps.step_key` là duy nhất trong journey; order liên kết step phải cùng patient/location/company.
+- Intake đã submit là bất biến; submit lại renewal token trả về submission cũ thay vì tạo trùng.
+- Churn event là append-only; churn sẽ đóng journey, hủy step chưa hoàn tất và revoke link còn hiệu lực trong cùng transaction.
 
 ## Webhook integration
 
@@ -141,7 +168,19 @@ Apply thủ công:
 
 ```bash
 psql "$DATABASE_URL" -f migrations/000001_init.up.sql
+psql "$DATABASE_URL" -f migrations/000002_care_journeys.up.sql
+psql "$DATABASE_URL" -f migrations/000003_flexible_programs.up.sql
 ```
+
+Nếu PostgreSQL Docker volume đã tồn tại từ trước khi có module care journey, apply migration mới rồi restart API:
+
+```bash
+make migrate-care-journeys
+make migrate-flexible-programs
+docker compose restart api
+```
+
+Không cần chạy các lệnh migration thủ công với database mới vì Docker tự apply cả ba migration khi khởi tạo volume lần đầu.
 
 Kiểm tra code:
 
@@ -154,7 +193,7 @@ Các secret trong `.env.example` và `docker-compose.yml` chỉ dùng local; pro
 
 ## Test API bằng Bruno
 
-Project có sẵn collection tại thư mục `bruno/`, gồm 17 request chạy tuần tự: health check, register/refresh JWT, roles, location, onboarding clinician, patient, order, audit log và integration event. Token cùng các ID được tự động lưu thành runtime variables.
+Project có sẵn collection tại thư mục `bruno/`, gồm 51 request chạy tuần tự: health check, auth, tenant, patient, care journey, renewal, order, audit và một kịch bản Implant đầy đủ. Kịch bản nha khoa tự tạo workflow/form/program version, publish, instantiate, submit form, chuyển trạng thái, mở dependency và kiểm tra cả hai nhánh cần/không cần ghép xương. Token cùng các ID được tự động lưu thành runtime variables.
 
 ### Bruno Desktop
 

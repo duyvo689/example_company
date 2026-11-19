@@ -1,0 +1,23 @@
+meta {
+  name: Start Examination
+  type: http
+  seq: 19
+}
+patch {
+  url: {{baseUrl}}/api/v1/journey-steps/{{examinationStepId}}
+  body: json
+  auth: none
+}
+headers {
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+}
+body:json {
+  {
+    "status": "IN_PROGRESS",
+    "note": "Bắt đầu khám Implant"
+  }
+}
+tests {
+  test("follows configured READY to IN_PROGRESS transition", function () { expect(res.getStatus()).to.equal(200); expect(res.getBody().data.status).to.equal("IN_PROGRESS"); });
+}

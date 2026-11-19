@@ -1,0 +1,34 @@
+meta {
+  name: Churn Journey
+  type: http
+  seq: 1
+  tags: [
+    smoke
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/care-journeys/{{journeyId}}/churn-events
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "event_type": "CHURNED",
+    "reason_code": "PATIENT_REQUEST",
+    "note": "Bruno lifecycle test"
+  }
+}
+
+tests {
+  test("records append-only churn event", function () {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.getBody().data.event_type).to.equal("CHURNED");
+  });
+}

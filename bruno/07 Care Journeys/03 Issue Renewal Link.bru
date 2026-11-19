@@ -1,0 +1,40 @@
+meta {
+  name: Issue Renewal Link
+  type: http
+  seq: 3
+  tags: [
+    smoke
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/journey-steps/{{renewalStepId}}/renewal-links
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "verification_value": "Nguyen|1990-05-20",
+    "expires_in_days": 14,
+    "max_attempts": 5
+  }
+}
+
+script:post-response {
+  bru.setVar("renewalToken", res.getBody().data.token);
+  bru.setVar("renewalLinkId", res.getBody().data.renewal_link.id);
+}
+
+tests {
+  test("returns raw token only when issued", function () {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.getBody().data.token).to.be.a("string");
+    expect(res.getBody().data.renewal_link.status).to.equal("ISSUED");
+  });
+}

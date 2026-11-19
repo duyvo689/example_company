@@ -1,0 +1,32 @@
+meta {
+  name: Create Bone Graft Step
+  type: http
+  seq: 11
+}
+post {
+  url: {{baseUrl}}/api/v1/program-versions/{{programVersionId}}/steps
+  body: json
+  auth: none
+}
+headers {
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+}
+body:json {
+	{
+		"code": "bone-graft",
+		"name": "Ghép xương",
+		"step_type": "PROCEDURE",
+		"display_order": 2,
+		"is_required": false,
+		"due_days": 14,
+		"condition": {"field":"needs_bone_graft","operator":"equals","value":true},
+		"workflow_template_id": "{{stepWorkflowId}}"
+	}
+}
+script:post-response {
+  bru.setVar("boneGraftTemplateId", res.getBody().data.id);
+}
+tests {
+  test("creates conditional dental step", function () { expect(res.getStatus()).to.equal(201); });
+}

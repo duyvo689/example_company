@@ -1,0 +1,31 @@
+meta {
+  name: Get Journey
+  type: http
+  seq: 2
+  tags: [
+    smoke
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/care-journeys/{{journeyId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+script:post-response {
+  const steps = res.getBody().data.steps;
+  bru.setVar("orderStepId", steps.find((step) => step.step_key === "initial-medication-order").id);
+  bru.setVar("renewalStepId", steps.find((step) => step.step_key === "cycle-1-renewal-1").id);
+}
+
+tests {
+  test("returns journey aggregate", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().data.steps).to.have.lengthOf(2);
+  });
+}

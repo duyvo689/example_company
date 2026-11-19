@@ -1,0 +1,39 @@
+meta {
+  name: Create Journey Workflow
+  type: http
+  seq: 3
+}
+post {
+  url: {{baseUrl}}/api/v1/workflows
+  body: json
+  auth: none
+}
+headers {
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+}
+body:json {
+  {
+    "code": "IMPLANT_JOURNEY_{{timestamp}}",
+    "name": "Quy trình đợt Implant",
+    "entity_type": "JOURNEY",
+    "states": [
+      {"code":"ONBOARDING","standard_code":"ONBOARDING","display_name":"Tiếp nhận Implant","display_order":1,"is_initial":true},
+      {"code":"ACTIVE","standard_code":"ACTIVE","display_name":"Đang điều trị Implant","display_order":2},
+      {"code":"PAUSED","standard_code":"PAUSED","display_name":"Tạm dừng","display_order":3},
+      {"code":"COMPLETED","standard_code":"COMPLETED","display_name":"Hoàn tất Implant","display_order":4,"is_terminal":true}
+    ],
+    "transitions": [
+      {"from_state_code":"ONBOARDING","to_state_code":"ACTIVE"},
+      {"from_state_code":"ACTIVE","to_state_code":"PAUSED"},
+      {"from_state_code":"PAUSED","to_state_code":"ACTIVE"},
+      {"from_state_code":"ACTIVE","to_state_code":"COMPLETED"}
+    ]
+  }
+}
+script:post-response {
+  bru.setVar("journeyWorkflowId", res.getBody().data.id);
+}
+tests {
+  test("creates configurable journey workflow", function () { expect(res.getStatus()).to.equal(201); });
+}

@@ -1,0 +1,28 @@
+meta {
+  name: Get Churned Journey
+  type: http
+  seq: 2
+  tags: [
+    smoke
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/care-journeys/{{journeyId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+tests {
+  test("churn closes journey and cancels unfinished steps", function () {
+    const body = res.getBody().data;
+    expect(res.getStatus()).to.equal(200);
+    expect(body.journey.status).to.equal("CHURNED");
+    expect(body.churn_events[0].event_type).to.equal("CHURNED");
+    expect(body.steps.filter((step) => step.status === "CANCELLED").length).to.be.greaterThan(0);
+  });
+}

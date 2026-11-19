@@ -1,0 +1,27 @@
+meta {
+  name: Create Form Template
+  type: http
+  seq: 5
+}
+post {
+  url: {{baseUrl}}/api/v1/form-templates
+  body: json
+  auth: none
+}
+headers {
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+}
+body:json {
+  {
+    "code": "IMPLANT_HISTORY_{{timestamp}}",
+    "name": "Phiếu tiền sử Implant",
+    "description": "Phiếu bệnh nhân điền trước khi khám"
+  }
+}
+script:post-response {
+  if (res.getBody().data) bru.setVar("formTemplateId", res.getBody().data.id);
+}
+tests {
+  test("creates versioned dental form", function () { expect(res.getStatus(), JSON.stringify(res.getBody())).to.equal(201); });
+}

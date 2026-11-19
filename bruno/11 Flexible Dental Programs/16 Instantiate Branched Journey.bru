@@ -1,0 +1,30 @@
+meta {
+  name: Instantiate Branched Journey
+  type: http
+  seq: 16
+}
+post {
+  url: {{baseUrl}}/api/v1/treatment-programs/{{programId}}/instantiate
+  body: json
+  auth: none
+}
+headers {
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+}
+body:json {
+  {
+    "patient_id": "{{patientId}}",
+    "location_id": "{{locationId}}",
+    "context": {
+      "needs_bone_graft": true,
+      "source": "bruno"
+    }
+  }
+}
+script:post-response {
+  bru.setVar("flexibleJourneyId", res.getBody().data.id);
+}
+tests {
+  test("pins patient journey to published program version", function () { expect(res.getStatus()).to.equal(201); expect(res.getBody().data.program_version_id).to.equal(bru.getVar("programVersionId")); });
+}

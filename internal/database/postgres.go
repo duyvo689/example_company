@@ -41,8 +41,14 @@ func AutoMigrate(db *gorm.DB) error {
 	return db.AutoMigrate(
 		&domain.Company{}, &domain.Location{}, &domain.User{}, &domain.Role{},
 		&domain.Membership{}, &domain.Patient{}, &domain.PatientLocation{},
-		&domain.LocationAssignment{}, &domain.Order{}, &domain.AuditLog{},
+		&domain.LocationAssignment{}, &domain.CareJourney{}, &domain.JourneyStep{},
+		&domain.RenewalLink{}, &domain.IntakeSubmission{}, &domain.IntakeFile{},
+		&domain.PatientChurnEvent{}, &domain.Order{}, &domain.AuditLog{},
 		&domain.IntegrationEvent{}, &domain.RefreshToken{},
+		&domain.WorkflowTemplate{}, &domain.WorkflowState{}, &domain.WorkflowTransition{},
+		&domain.TreatmentProgram{}, &domain.ProgramVersion{}, &domain.ProgramLocation{},
+		&domain.StepTemplate{}, &domain.StepDependency{}, &domain.FormTemplate{},
+		&domain.FormVersion{}, &domain.StepFormAssignment{}, &domain.StatusHistory{},
 	)
 }
 

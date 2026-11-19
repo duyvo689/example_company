@@ -1,0 +1,21 @@
+meta {
+  name: Verify Dependency Unlock
+  type: http
+  seq: 22
+}
+get {
+  url: {{baseUrl}}/api/v1/care-journeys/{{flexibleJourneyId}}
+  body: none
+  auth: none
+}
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+tests {
+  test("unlocks bone graft and records status history", function () {
+    const data = res.getBody().data;
+    expect(res.getStatus()).to.equal(200);
+    expect(data.steps.find(s => s.step_key === "bone-graft").status).to.equal("READY");
+    expect(data.status_history.length).to.be.greaterThan(2);
+  });
+}

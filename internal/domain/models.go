@@ -101,16 +101,18 @@ type LocationAssignment struct {
 
 type Order struct {
 	BaseModel
-	CompanyID             uuid.UUID   `json:"company_id" gorm:"type:uuid;not null;index"`
-	LocationID            uuid.UUID   `json:"location_id" gorm:"type:uuid;not null;index"`
-	PatientID             uuid.UUID   `json:"patient_id" gorm:"type:uuid;not null;index"`
-	CreatedByMembershipID uuid.UUID   `json:"created_by_membership_id" gorm:"type:uuid;not null;index"`
-	ExternalOrderID       string      `json:"external_order_id" gorm:"size:100;uniqueIndex:idx_order_company_external"`
-	Status                string      `json:"status" gorm:"size:30;not null;default:pending;index"`
-	Company               *Company    `json:"company,omitempty" gorm:"foreignKey:CompanyID"`
-	Location              *Location   `json:"location,omitempty" gorm:"foreignKey:LocationID"`
-	Patient               *Patient    `json:"patient,omitempty" gorm:"foreignKey:PatientID"`
-	CreatedBy             *Membership `json:"created_by,omitempty" gorm:"foreignKey:CreatedByMembershipID"`
+	CompanyID             uuid.UUID    `json:"company_id" gorm:"type:uuid;not null;index"`
+	LocationID            uuid.UUID    `json:"location_id" gorm:"type:uuid;not null;index"`
+	PatientID             uuid.UUID    `json:"patient_id" gorm:"type:uuid;not null;index"`
+	CreatedByMembershipID uuid.UUID    `json:"created_by_membership_id" gorm:"type:uuid;not null;index"`
+	JourneyStepID         *uuid.UUID   `json:"journey_step_id,omitempty" gorm:"type:uuid;index"`
+	ExternalOrderID       string       `json:"external_order_id" gorm:"size:100;uniqueIndex:idx_order_company_external"`
+	Status                string       `json:"status" gorm:"size:30;not null;default:pending;index"`
+	Company               *Company     `json:"company,omitempty" gorm:"foreignKey:CompanyID"`
+	Location              *Location    `json:"location,omitempty" gorm:"foreignKey:LocationID"`
+	Patient               *Patient     `json:"patient,omitempty" gorm:"foreignKey:PatientID"`
+	CreatedBy             *Membership  `json:"created_by,omitempty" gorm:"foreignKey:CreatedByMembershipID"`
+	JourneyStep           *JourneyStep `json:"journey_step,omitempty" gorm:"foreignKey:JourneyStepID"`
 }
 
 type AuditLog struct {

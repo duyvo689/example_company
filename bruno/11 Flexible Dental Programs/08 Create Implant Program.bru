@@ -1,0 +1,28 @@
+meta {
+  name: Create Implant Program
+  type: http
+  seq: 8
+}
+post {
+  url: {{baseUrl}}/api/v1/treatment-programs
+  body: json
+  auth: none
+}
+headers {
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+}
+body:json {
+  {
+    "code": "IMPLANT_{{timestamp}}",
+    "name": "Trồng răng Implant linh hoạt",
+    "category": "DENTAL",
+    "description": "Có nhánh ghép xương theo tình trạng bệnh nhân"
+  }
+}
+script:post-response {
+  if (res.getBody().data) bru.setVar("programId", res.getBody().data.id);
+}
+tests {
+  test("creates dental treatment program", function () { expect(res.getStatus()).to.equal(201); expect(res.getBody().data.category).to.equal("DENTAL"); });
+}

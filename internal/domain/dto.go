@@ -97,15 +97,17 @@ type AssignmentRequest struct {
 }
 
 type OrderRequest struct {
-	LocationID      uuid.UUID `json:"location_id" binding:"required"`
-	PatientID       uuid.UUID `json:"patient_id" binding:"required"`
-	ExternalOrderID string    `json:"external_order_id" binding:"required,min=1,max=100"`
-	Status          string    `json:"status" binding:"omitempty,oneof=pending processing completed cancelled failed"`
+	LocationID      uuid.UUID  `json:"location_id" binding:"required"`
+	PatientID       uuid.UUID  `json:"patient_id" binding:"required"`
+	JourneyStepID   *uuid.UUID `json:"journey_step_id"`
+	ExternalOrderID string     `json:"external_order_id" binding:"required,min=1,max=100"`
+	Status          string     `json:"status" binding:"omitempty,oneof=pending processing completed cancelled failed"`
 }
 
 type OrderUpdateRequest struct {
 	LocationID      *uuid.UUID `json:"location_id"`
 	PatientID       *uuid.UUID `json:"patient_id"`
+	JourneyStepID   *uuid.UUID `json:"journey_step_id"`
 	ExternalOrderID *string    `json:"external_order_id" binding:"omitempty,min=1,max=100"`
 	Status          *string    `json:"status" binding:"omitempty,oneof=pending processing completed cancelled failed"`
 }

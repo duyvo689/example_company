@@ -1,0 +1,29 @@
+meta {
+  name: Submit Required Form
+  type: http
+  seq: 18
+}
+post {
+  url: {{baseUrl}}/api/v1/intake-submissions
+  body: json
+  auth: none
+}
+headers {
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+}
+body:json {
+	{
+		"form_version_id": "{{formVersionId}}",
+		"patient_id": "{{patientId}}",
+		"location_id": "{{locationId}}",
+		"journey_id": "{{flexibleJourneyId}}",
+		"journey_step_id": "{{examinationStepId}}",
+		"intake_type": "NEW_PATIENT_INTAKE",
+		"schema_version": 1,
+		"answers": {"allergies":"Không","consent":true}
+	}
+}
+tests {
+  test("validates and saves answers against pinned form version", function () { expect(res.getStatus()).to.equal(201); expect(res.getBody().data.form_version_id).to.equal(bru.getVar("formVersionId")); });
+}

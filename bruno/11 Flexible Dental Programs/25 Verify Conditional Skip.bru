@@ -1,0 +1,20 @@
+meta {
+  name: Verify Conditional Skip
+  type: http
+  seq: 25
+}
+get {
+  url: {{baseUrl}}/api/v1/care-journeys/{{noGraftJourneyId}}
+  body: none
+  auth: none
+}
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+tests {
+  test("skips bone graft when patient context does not match", function () {
+    const steps = res.getBody().data.steps;
+    expect(res.getStatus()).to.equal(200);
+    expect(steps.find(s => s.step_key === "bone-graft").status).to.equal("SKIPPED");
+  });
+}

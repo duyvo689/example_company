@@ -10,6 +10,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./migrations/000001_init.up.sql:/docker-entrypoint-initdb.d/001_init.sql:ro
+      - ./migrations/000002_care_journeys.up.sql:/docker-entrypoint-initdb.d/002_care_journeys.sql:ro
+      - ./migrations/000003_flexible_programs.up.sql:/docker-entrypoint-initdb.d/003_flexible_programs.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d example_company"]
       interval: 3s

@@ -1,0 +1,26 @@
+meta {
+  name: Create Program Version
+  type: http
+  seq: 9
+}
+post {
+  url: {{baseUrl}}/api/v1/treatment-programs/{{programId}}/versions
+  body: json
+  auth: none
+}
+headers {
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+}
+body:json {
+  {
+    "journey_workflow_id": "{{journeyWorkflowId}}",
+    "change_note": "Phiên bản Implant đầu tiên"
+  }
+}
+script:post-response {
+  bru.setVar("programVersionId", res.getBody().data.id);
+}
+tests {
+  test("creates draft program version", function () { expect(res.getStatus()).to.equal(201); expect(res.getBody().data.version_number).to.equal(1); });
+}

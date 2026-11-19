@@ -1,0 +1,30 @@
+meta {
+  name: Instantiate Journey Without Graft
+  type: http
+  seq: 24
+}
+post {
+  url: {{baseUrl}}/api/v1/treatment-programs/{{programId}}/instantiate
+  body: json
+  auth: none
+}
+headers {
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+}
+body:json {
+  {
+    "patient_id": "{{noGraftPatientId}}",
+    "location_id": "{{locationId}}",
+    "context": {
+      "needs_bone_graft": false,
+      "source": "bruno"
+    }
+  }
+}
+script:post-response {
+	if (res.getBody().data) bru.setVar("noGraftJourneyId", res.getBody().data.id);
+}
+tests {
+	test("instantiates the same program for another patient", function () { expect(res.getStatus(), JSON.stringify(res.getBody())).to.equal(201); expect(res.getBody().data.episode_number).to.equal(1); });
+}

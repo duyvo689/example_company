@@ -1,0 +1,31 @@
+meta {
+  name: Create Form Version
+  type: http
+  seq: 6
+}
+post {
+  url: {{baseUrl}}/api/v1/form-templates/{{formTemplateId}}/versions
+  body: json
+  auth: none
+}
+headers {
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+}
+body:json {
+	{
+		"schema": {
+			"title": "Tiền sử Implant",
+			"fields": [
+				{"key":"allergies","type":"text","label":"Dị ứng","required":true},
+				{"key":"consent","type":"boolean","label":"Đồng ý điều trị","required":true}
+			]
+		}
+	}
+}
+script:post-response {
+  bru.setVar("formVersionId", res.getBody().data.id);
+}
+tests {
+  test("creates structured form schema", function () { expect(res.getStatus()).to.equal(201); expect(res.getBody().data.status).to.equal("DRAFT"); });
+}

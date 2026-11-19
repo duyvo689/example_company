@@ -14,7 +14,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (s *Service) ListOrders(ctx context.Context, claims *platformjwt.Claims, page, pageSize int, status string, locationID, patientID *uuid.UUID) (*domain.Page[domain.Order], error) {
+func (s *Service) ListOrders(ctx context.Context, claims *platformjwt.Claims, page, pageSize int, status string, locationID, patientID, journeyStepID *uuid.UUID) (*domain.Page[domain.Order], error) {
 	base := s.db.WithContext(ctx).Model(&domain.Order{}).Where("orders.company_id = ?", claims.CompanyID)
 	if claims.Scope == domain.ScopeLocation {
 		base = base.Joins("JOIN location_assignments la ON la.location_id = orders.location_id AND la.membership_id = ?", claims.MembershipID)
@@ -28,6 +28,9 @@ func (s *Service) ListOrders(ctx context.Context, claims *platformjwt.Claims, pa
 	if patientID != nil {
 		base = base.Where("orders.patient_id = ?", *patientID)
 	}
+	if journeyStepID != nil {
+		base = base.Where("orders.journey_step_id = ?", *journeyStepID)
+	}
 	if status != "" {
 		base = base.Where("orders.status = ?", status)
 	}
@@ -36,7 +39,7 @@ func (s *Service) ListOrders(ctx context.Context, claims *platformjwt.Claims, pa
 		return nil, err
 	}
 	var items []domain.Order
-	if err := base.Preload("Location").Preload("Patient").Order("orders.created_at DESC").Offset(pageOffset(page, pageSize)).Limit(pageSize).Find(&items).Error; err != nil {
+	if err := base.Preload("Location").Preload("Patient").Preload("JourneyStep").Order("orders.created_at DESC").Offset(pageOffset(page, pageSize)).Limit(pageSize).Find(&items).Error; err != nil {
 		return nil, err
 	}
 	return makePage(items, page, pageSize, total), nil
@@ -44,7 +47,7 @@ func (s *Service) ListOrders(ctx context.Context, claims *platformjwt.Claims, pa
 
 func (s *Service) GetOrder(ctx context.Context, claims *platformjwt.Claims, id uuid.UUID) (*domain.Order, error) {
 	var order domain.Order
-	query := s.db.WithContext(ctx).Preload("Location").Preload("Patient").Preload("CreatedBy.User").Where("orders.id = ? AND orders.company_id = ?", id, claims.CompanyID)
+	query := s.db.WithContext(ctx).Preload("Location").Preload("Patient").Preload("CreatedBy.User").Preload("JourneyStep").Where("orders.id = ? AND orders.company_id = ?", id, claims.CompanyID)
 	if claims.Scope == domain.ScopeLocation {
 		query = query.Joins("JOIN location_assignments la ON la.location_id = orders.location_id AND la.membership_id = ?", claims.MembershipID)
 	}
@@ -62,11 +65,16 @@ func (s *Service) CreateOrder(ctx context.Context, claims *platformjwt.Claims, r
 	if err := patientAtLocation(s.db.WithContext(ctx), req.PatientID, req.LocationID); err != nil {
 		return nil, err
 	}
+	if req.JourneyStepID != nil {
+		if err := validOrderStep(s.db.WithContext(ctx), claims, *req.JourneyStepID, req.PatientID, req.LocationID); err != nil {
+			return nil, err
+		}
+	}
 	status := req.Status
 	if status == "" {
 		status = domain.StatusPending
 	}
-	order := domain.Order{CompanyID: claims.CompanyID, LocationID: req.LocationID, PatientID: req.PatientID, CreatedByMembershipID: claims.MembershipID, ExternalOrderID: strings.TrimSpace(req.ExternalOrderID), Status: status}
+	order := domain.Order{CompanyID: claims.CompanyID, LocationID: req.LocationID, PatientID: req.PatientID, CreatedByMembershipID: claims.MembershipID, JourneyStepID: req.JourneyStepID, ExternalOrderID: strings.TrimSpace(req.ExternalOrderID), Status: status}
 	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&order).Error; err != nil {
 			return translate(err, "order")
@@ -81,7 +89,7 @@ func (s *Service) UpdateOrder(ctx context.Context, claims *platformjwt.Claims, i
 	if err != nil {
 		return nil, err
 	}
-	if req.LocationID == nil && req.PatientID == nil && req.ExternalOrderID == nil && req.Status == nil {
+	if req.LocationID == nil && req.PatientID == nil && req.JourneyStepID == nil && req.ExternalOrderID == nil && req.Status == nil {
 		return current, nil
 	}
 	if req.LocationID != nil {
@@ -96,6 +104,9 @@ func (s *Service) UpdateOrder(ctx context.Context, claims *platformjwt.Claims, i
 		}
 		current.PatientID = *req.PatientID
 	}
+	if req.JourneyStepID != nil {
+		current.JourneyStepID = req.JourneyStepID
+	}
 	if req.ExternalOrderID != nil {
 		current.ExternalOrderID = strings.TrimSpace(*req.ExternalOrderID)
 	}
@@ -105,6 +116,11 @@ func (s *Service) UpdateOrder(ctx context.Context, claims *platformjwt.Claims, i
 	if err := patientAtLocation(s.db.WithContext(ctx), current.PatientID, current.LocationID); err != nil {
 		return nil, err
 	}
+	if current.JourneyStepID != nil {
+		if err := validOrderStep(s.db.WithContext(ctx), claims, *current.JourneyStepID, current.PatientID, current.LocationID); err != nil {
+			return nil, err
+		}
+	}
 	err = s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Save(current).Error; err != nil {
 			return translate(err, "order")
@@ -112,6 +128,23 @@ func (s *Service) UpdateOrder(ctx context.Context, claims *platformjwt.Claims, i
 		return createOrderEvent(tx, *current, "order.updated")
 	})
 	return current, err
+}
+
+func validOrderStep(db *gorm.DB, claims *platformjwt.Claims, stepID, patientID, locationID uuid.UUID) error {
+	var step domain.JourneyStep
+	if err := db.Preload("Journey").First(&step, "id = ? AND company_id = ?", stepID, claims.CompanyID).Error; err != nil {
+		return translate(err, "journey step")
+	}
+	if err := journeyAllowed(db, claims, step.JourneyID); err != nil {
+		return err
+	}
+	if step.Journey == nil || step.Journey.PatientID != patientID || step.Journey.LocationID != locationID {
+		return httpx.BadRequest("journey step, patient and location do not match")
+	}
+	if isTerminalJourneyStatus(step.Journey.Status) {
+		return httpx.Conflict("cannot create an order for a terminal journey")
+	}
+	return nil
 }
 
 func patientAtLocation(db *gorm.DB, patientID, locationID uuid.UUID) error {

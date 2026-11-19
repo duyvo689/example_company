@@ -3,3 +3,8 @@
 bin
 coverage.out
 README.md
+node_modules
+bruno
+docs
+package.json
+package-lock.json
