@@ -1,0 +1,45 @@
+meta {
+  name: Create Patient
+  type: http
+  seq: 1
+  tags: [
+    smoke
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/patients
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "primary_location_id": "{{locationId}}",
+    "public_ref": "{{patientRef}}",
+    "external_chart_id": "{{chartId}}",
+    "status": "active"
+  }
+}
+
+script:pre-request {
+  const suffix = Date.now();
+  bru.setVar("patientRef", `PAT-${suffix}`);
+  bru.setVar("chartId", `CHART-${suffix}`);
+}
+
+script:post-response {
+  bru.setVar("patientId", res.getBody().data.id);
+}
+
+tests {
+  test("creates patient at location", function () {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.getBody().data.primary_location_id).to.equal(bru.getVar("locationId"));
+  });
+}

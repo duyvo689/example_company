@@ -1,0 +1,10 @@
+{
+  "name": "example-company-api-tests",
+  "private": true,
+  "scripts": {
+    "test:api": "cd bruno && bru run --env Local"
+  },
+  "devDependencies": {
+    "@usebruno/cli": "4.3.0"
+  }
+}

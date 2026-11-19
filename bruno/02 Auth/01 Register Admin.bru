@@ -1,0 +1,49 @@
+meta {
+  name: Register Admin
+  type: http
+  seq: 1
+  tags: [
+    smoke
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/register
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "company_name": "{{companyName}}",
+    "name": "Bruno Admin",
+    "email": "{{adminEmail}}",
+    "password": "{{adminPassword}}"
+  }
+}
+
+script:pre-request {
+  const suffix = Date.now();
+  bru.setVar("companyName", `Bruno Company ${suffix}`);
+  bru.setVar("adminEmail", `bruno-admin-${suffix}@example.test`);
+}
+
+script:post-response {
+  const body = res.getBody().data;
+  bru.setVar("accessToken", body.access_token);
+  bru.setVar("refreshToken", body.refresh_token);
+  bru.setVar("companyId", body.membership.company_id);
+  bru.setVar("adminMembershipId", body.membership.id);
+}
+
+tests {
+  test("registers company administrator", function () {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.getBody().data.access_token).to.be.a("string");
+    expect(res.getBody().data.membership.role.code).to.equal("ADMIN");
+  });
+}

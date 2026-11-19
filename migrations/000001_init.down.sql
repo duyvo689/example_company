@@ -1,0 +1,12 @@
+DROP TABLE IF EXISTS refresh_tokens;
+DROP TABLE IF EXISTS integration_events;
+DROP TABLE IF EXISTS audit_logs;
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS location_assignments;
+DROP TABLE IF EXISTS patient_locations;
+DROP TABLE IF EXISTS patients;
+DROP TABLE IF EXISTS memberships;
+DROP TABLE IF EXISTS locations;
+DROP TABLE IF EXISTS roles;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS companies;

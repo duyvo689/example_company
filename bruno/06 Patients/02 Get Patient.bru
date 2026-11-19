@@ -1,0 +1,26 @@
+meta {
+  name: Get Patient
+  type: http
+  seq: 2
+  tags: [
+    smoke
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/patients/{{patientId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+tests {
+  test("returns patient and location links", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().data.patient.id).to.equal(bru.getVar("patientId"));
+    expect(res.getBody().data.locations).to.have.lengthOf(1);
+  });
+}

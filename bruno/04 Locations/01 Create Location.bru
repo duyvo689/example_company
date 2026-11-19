@@ -1,0 +1,42 @@
+meta {
+  name: Create Location
+  type: http
+  seq: 1
+  tags: [
+    smoke
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/locations
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "code": "{{locationCode}}",
+    "name": "Bruno Test Clinic",
+    "status": "active"
+  }
+}
+
+script:pre-request {
+  bru.setVar("locationCode", `BRU-${Date.now()}`);
+}
+
+script:post-response {
+  bru.setVar("locationId", res.getBody().data.id);
+}
+
+tests {
+  test("creates location in current company", function () {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.getBody().data.company_id).to.equal(bru.getVar("companyId"));
+  });
+}

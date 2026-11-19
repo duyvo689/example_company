@@ -1,0 +1,43 @@
+meta {
+  name: Create Order
+  type: http
+  seq: 1
+  tags: [
+    smoke
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/orders
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "location_id": "{{locationId}}",
+    "patient_id": "{{patientId}}",
+    "external_order_id": "{{externalOrderId}}",
+    "status": "pending"
+  }
+}
+
+script:pre-request {
+  bru.setVar("externalOrderId", `ORD-${Date.now()}`);
+}
+
+script:post-response {
+  bru.setVar("orderId", res.getBody().data.id);
+}
+
+tests {
+  test("creates order and outbox event", function () {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.getBody().data.status).to.equal("pending");
+  });
+}

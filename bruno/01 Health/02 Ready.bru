@@ -1,0 +1,21 @@
+meta {
+  name: Ready
+  type: http
+  seq: 2
+  tags: [
+    smoke
+  ]
+}
+
+get {
+  url: {{baseUrl}}/health/ready
+  body: none
+  auth: none
+}
+
+tests {
+  test("API and database are ready", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().data.status).to.equal("ready");
+  });
+}

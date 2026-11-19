@@ -1,0 +1,21 @@
+meta {
+  name: Live
+  type: http
+  seq: 1
+  tags: [
+    smoke
+  ]
+}
+
+get {
+  url: {{baseUrl}}/health/live
+  body: none
+  auth: none
+}
+
+tests {
+  test("API is live", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().data.status).to.equal("ok");
+  });
+}

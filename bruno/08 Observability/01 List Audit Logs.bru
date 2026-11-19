@@ -1,0 +1,25 @@
+meta {
+  name: List Audit Logs
+  type: http
+  seq: 1
+  tags: [
+    smoke
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/audit-logs?page=1&page_size=50
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+tests {
+  test("records mutation audit logs", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().data.total).to.be.greaterThan(0);
+  });
+}

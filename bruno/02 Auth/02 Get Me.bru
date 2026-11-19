@@ -1,0 +1,25 @@
+meta {
+  name: Get Me
+  type: http
+  seq: 2
+  tags: [
+    smoke
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/me
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+tests {
+  test("returns current membership", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().data.company_id).to.equal(bru.getVar("companyId"));
+  });
+}

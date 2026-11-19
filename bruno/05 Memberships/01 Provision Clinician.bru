@@ -1,0 +1,44 @@
+meta {
+  name: Provision Clinician
+  type: http
+  seq: 1
+  tags: [
+    smoke
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/memberships
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{clinicianEmail}}",
+    "name": "Bruno Clinician",
+    "password": "{{clinicianPassword}}",
+    "role_id": "{{clinicianRoleId}}",
+    "status": "active"
+  }
+}
+
+script:pre-request {
+  bru.setVar("clinicianEmail", `bruno-clinician-${Date.now()}@example.test`);
+}
+
+script:post-response {
+  bru.setVar("clinicianMembershipId", res.getBody().data.id);
+}
+
+tests {
+  test("provisions location-scoped clinician", function () {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.getBody().data.role.code).to.equal("CLINICIAN");
+  });
+}

@@ -1,0 +1,25 @@
+meta {
+  name: List Integration Events
+  type: http
+  seq: 2
+  tags: [
+    smoke
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/integration-events?page=1&page_size=20
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+tests {
+  test("order mutations produce outbox events", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().data.total).to.be.greaterThanOrEqual(2);
+  });
+}

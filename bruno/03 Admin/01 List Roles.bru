@@ -1,0 +1,34 @@
+meta {
+  name: List Roles
+  type: http
+  seq: 1
+  tags: [
+    smoke
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/roles
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+script:post-response {
+  const roles = res.getBody().data.items;
+  const clinician = roles.find((role) => role.code === "CLINICIAN");
+  if (clinician) {
+    bru.setVar("clinicianRoleId", clinician.id);
+  }
+}
+
+tests {
+  test("contains built-in roles", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().data.items.map((role) => role.code)).to.include("ADMIN");
+    expect(res.getBody().data.items.map((role) => role.code)).to.include("CLINICIAN");
+  });
+}
